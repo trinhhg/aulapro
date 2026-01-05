@@ -10,7 +10,10 @@ body {
   color: #374151;
 }
 
-/* FONT CHỮ TRONG Ô INPUT/OUTPUT */
+/* ANTI-FLICKER: Ẩn mọi thứ cho đến khi JS load xong tab */
+body.loading .tab-content { display: none !important; }
+
+/* FONT CHỮ */
 textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important; }
 
 /* === SCROLLBAR === */
@@ -25,9 +28,8 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
   display: flex; justify-content: space-between; align-items: center;
   flex-shrink: 0; z-index: 100; position: sticky; top: 0;
 }
-.header-left { flex: 1.5; }
-.header-right { flex: 0.5; }
-.header-center { flex: 2; display: flex; justify-content: center; height: 100%; }
+.header-left { display: flex; flex-direction: column; }
+.header-right { height: 100%; display: flex; align-items: flex-end; }
 .header-left h1 { margin: 0; font-size: 16px; color: #111827; font-weight: 700; margin-bottom: 4px; }
 
 /* DONATE STYLES */
@@ -44,7 +46,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 }
 
 /* === TABS === */
-.tabs { display: flex; gap: 5px; height: 100%; align-items: flex-end; }
+.tabs { display: flex; gap: 5px; height: 100%; }
 .tab-button {
   border: none; background: transparent; padding: 0 25px; height: 45px;
   cursor: pointer; font-weight: 600; color: #6b7280;
@@ -57,23 +59,27 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 /* === MAIN CONTENT === */
 .app-body { flex: 1; padding: 15px; display: flex; flex-direction: column; height: auto; }
 .tab-content { display: none; width: 100%; flex-direction: column; }
+/* Active tab is handled by JS + CSS */
 .tab-content.active { display: flex; }
 
-/* === SETTINGS LAYOUT === */
+/* === SETTINGS LAYOUT (PAGE SCROLL) === */
 .settings-layout {
     display: flex;
     flex-direction: row;
-    height: calc(100vh - 100px);
+    /* Loại bỏ height fixed để sidebar cuộn theo trang */
     background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    overflow: hidden;
     max-width: 1200px; margin: 0 auto; width: 100%;
+    align-items: flex-start; /* Sidebar ko bị stretch */
+    min-height: calc(100vh - 100px);
 }
 
 /* Sidebar */
 .settings-sidebar {
     width: 240px; background: #f9fafb; border-right: 1px solid #e5e7eb;
     display: flex; flex-direction: column; padding: 20px 0;
-    flex-shrink: 0; overflow-y: auto;
+    flex-shrink: 0; 
+    position: sticky; top: 0; /* Sticky sidebar */
+    align-self: flex-start;
 }
 .sidebar-category-title {
     padding: 15px 20px 5px; font-size: 11px; font-weight: 800; color: #9ca3af; 
@@ -88,17 +94,16 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .sidebar-btn:hover { background: #f3f4f6; color: #111827; }
 .sidebar-btn.active { background: white; color: #2563eb; border-left-color: #2563eb; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-/* Content */
+/* Content - Tận dụng hết khoảng trống */
 .settings-content { 
     flex: 1; display: flex; flex-direction: column; 
-    overflow-y: auto; /* Cuộn toàn bộ nội dung setting */
-    position: relative; 
+    width: 100%; min-height: 400px;
 }
 .setting-panel { display: none; flex-direction: column; width: 100%; }
 .setting-panel.active { display: flex; }
 
 /* === FORMAT UI === */
-.format-container { padding: 20px; }
+.format-container { padding: 20px; width: 100%; }
 .format-desc { font-size: 13px; color: #6b7280; margin-bottom: 20px; margin-top: 0; }
 .format-options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
 
@@ -131,6 +136,37 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .regex-radio { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 5px; }
 .regex-detail { font-size: 12px; color: #6b7280; margin-left: 26px; }
 .full-width-input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #d1d5db; border-radius: 4px; font-family: monospace; }
+
+/* === GUIDE ANIMATION (SKELETON) === */
+.guide-block { margin-bottom: 30px; }
+.mockup-window {
+    width: 100%; max-width: 500px; height: 120px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    display: flex; flex-direction: column; overflow: hidden; margin-top: 10px;
+}
+.mockup-header {
+    height: 24px; background: #f3f4f6; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; padding-left: 10px; gap: 6px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.red { background: #f87171; } .dot.yellow { background: #facc15; } .dot.green { background: #4ade80; }
+.mockup-body { flex: 1; display: flex; padding: 10px; gap: 10px; }
+.mockup-sidebar { width: 25%; height: 100%; background: #f9fafb; border-radius: 4px; }
+.mockup-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.line { height: 8px; background: #e5e7eb; border-radius: 4px; }
+.line.w-70 { width: 70%; } .line.w-50 { width: 50%; } .line.w-90 { width: 90%; }
+.mockup-window:hover .line { background: #d1d5db; transition: 0.3s; }
+
+/* === SUPPORT BUTTON === */
+.support-container { text-align: center; padding-top: 40px; }
+.support-text { font-size: 16px; margin-bottom: 20px; font-weight: 600; color: #4b5563; }
+.support-btn {
+    padding: 12px 25px; font-size: 14px; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: transform 0.2s;
+}
+.support-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
 
 /* === BUTTONS & COMPONENTS === */
 .btn {
@@ -219,7 +255,7 @@ mark.hl-orange { background-color: #fdba74; color: #000; border-radius: 2px; pad
 @media (max-width: 768px) { 
     .split-grid-container { grid-template-columns: 1fr; }
     .settings-layout { flex-direction: column; height: auto; }
-    .settings-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; padding: 10px 0; overflow-y: visible; }
+    .settings-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; padding: 10px 0; overflow-y: visible; position: static; }
     .sidebar-btn { padding: 10px 20px; }
 }
 
