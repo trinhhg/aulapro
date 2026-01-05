@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. CONFIGURATION & STATE
     // =========================================================================
     
-    const STORAGE_KEY = 'trinh_hg_settings_v23_full';
-    const INPUT_STATE_KEY = 'trinh_hg_input_state_v23';
+    const STORAGE_KEY = 'trinh_hg_settings_v24_final';
+    const INPUT_STATE_KEY = 'trinh_hg_input_state_v24';
   
     // MARKERS
     const MARK_REP_START  = '\uE000'; 
@@ -16,12 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const defaultState = {
       currentMode: 'default',
-      activeTab: 'settings',
-      // 0=Off, 1=Inline, 2=Newline, 3=Dash
+      activeTab: 'settings', // Default tab
       dialogueMode: 0, 
-      // 0=Off, 1=Lower, 2=Upper Next
       abnormalCapsMode: 0,
-      // 'chapter', 'book', 'custom'
       regexMode: 'chapter',
       customRegex: '',
       modes: {
@@ -36,10 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
     let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState;
     if (!state.activeTab) state.activeTab = 'settings';
+    
+    // ANTI-FLICKER LOGIC: Apply active tab IMMEDIATELY
+    document.querySelectorAll('.tab-button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === state.activeTab);
+    });
+    document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.toggle('active', c.id === state.activeTab);
+    });
+    // Remove loading class to show content
+    document.body.classList.remove('loading');
+
+    // Ensure safe state
     if (state.dialogueMode === undefined) state.dialogueMode = 0;
     if (state.abnormalCapsMode === undefined) state.abnormalCapsMode = 0;
     if (!state.regexMode) state.regexMode = 'chapter';
-
     if (!state.modes || Object.keys(state.modes).length === 0) {
         state.modes = JSON.parse(JSON.stringify(defaultState.modes));
         state.currentMode = 'default';
@@ -81,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
       inputText: document.getElementById('input-text'),
       outputText: document.getElementById('output-text'),
       replaceBtn: document.getElementById('replace-button'),
+      copyBtn: document.getElementById('copy-button'),
       
       // Split
       splitInput: document.getElementById('split-input-text'),
@@ -110,6 +119,19 @@ document.addEventListener('DOMContentLoaded', () => {
       note.textContent = msg;
       container.appendChild(note);
       setTimeout(() => { note.style.opacity = '0'; setTimeout(() => note.remove(), 300); }, 2000); 
+    }
+
+    // NEW: Inline Notification for Buttons
+    function showInlineNotify(btn, msg) {
+        const originalText = btn.dataset.text || btn.textContent;
+        // Save original text if not saved yet
+        if (!btn.dataset.text) btn.dataset.text = originalText;
+        
+        btn.textContent = msg;
+        // Revert after 1.5s
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 1500);
     }
     
     function escapeHTML(str) { return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
@@ -151,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function performReplaceAll() {
         const rawText = els.inputText.value;
-        if (!rawText) return showNotification("Chưa có nội dung!", "error");
+        if (!rawText) { showInlineNotify(els.replaceBtn, "Chưa có nội dung!"); return; }
 
         try {
             let processedText = normalizeInput(rawText);
@@ -167,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         find: normalizeInput(p.find), 
                         replace: normalizeInput(p.replace || '') 
                     }))
-                    .sort((a,b) => b.find.length - a.find.length); // Process long matches first
+                    .sort((a,b) => b.find.length - a.find.length);
 
                 rules.forEach(rule => {
                     const pattern = escapeRegExp(rule.find);
@@ -185,68 +207,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // --- STEP 2: ABNORMAL CAPS (Viết hoa bất thường) ---
+            // --- STEP 2: ABNORMAL CAPS ---
             if (state.abnormalCapsMode > 0) {
-                // Regex: Lookbehind (lowercaseword or punct + space) then UppercaseWord
-                // Tránh bắt đầu câu.
-                // Tìm chữ hoa nằm sau: [chữ thường] [dấu phẩy, chấm phẩy] + dấu cách
                 const abnormalRegex = /(?<=[\p{Ll},;]\s+)([\p{Lu}][\p{Ll}]+)/gum;
-                
-                processedText = processedText.replace(abnormalRegex, (match, p1, offset, string) => {
-                    // Kiểm tra xem có phải Auto Caps không (sau . ? !)
-                    // Do Regex trên dùng Lookbehind [lowercase], nên nó đã loại trừ trường hợp sau dấu chấm câu.
-                    
-                    if (state.abnormalCapsMode == 1) { // Viết thường
-                        return p1.toLowerCase();
-                    } 
-                    else if (state.abnormalCapsMode == 2) { // Viết hoa từ sau (Địa ngục -> Địa Ngục)
-                        // Lấy từ tiếp theo sau match
-                        const afterMatch = string.slice(offset + p1.length);
-                        const nextWordMatch = afterMatch.match(/^\s+([\p{L}]+)/u);
-                        if (nextWordMatch) {
-                            // Chúng ta chỉ có thể thay thế text tại vị trí hiện tại. 
-                            // Việc thay đổi từ kế tiếp đòi hỏi cấu trúc phức tạp hơn.
-                            // Workaround: Trả về "Word " + "Nextword" (đã titlecase) và ăn luôn phần match tiếp theo? 
-                            // Không ổn vì replace chỉ thay thế phần match.
-                            // Giải pháp: Thay thế word hiện tại, và hy vọng người dùng chạy lại? Không.
-                            // Giải pháp tốt nhất cho replace regex đơn giản: Chỉ xử lý word hiện tại hoặc dùng 1 regex rộng hơn.
-                            
-                            // Regex rộng hơn để bắt cặp từ: 
-                            return p1; // Tạm thời fallback vì logic replace phức tạp
-                        }
-                    }
+                processedText = processedText.replace(abnormalRegex, (match, p1) => {
+                    if (state.abnormalCapsMode == 1) return p1.toLowerCase();
                     return match;
                 });
-
-                // Thực hiện lại với Regex bắt 2 từ nếu Mode 2
-                if (state.abnormalCapsMode == 2) {
-                     const twoWordRegex = /(?<=[\p{Ll},;]\s+)([\p{Lu}][\p{Ll}]+)(\s+)([\p{Ll}]+)/gum;
-                     processedText = processedText.replace(twoWordRegex, (match, w1, space, w2) => {
-                         return `${w1}${space}${toTitleCase(w2)}`;
-                     });
-                }
             }
 
             // --- STEP 3: AUTO CAPS ---
-            // Auto capitalize after . ? ! and also after : "
-            // Regex:
-            // Group 1: Prefix (. ? ! + spaces) OR (: " + spaces)
-            // Group 2-5: Match content similar to before
             if (mode.autoCaps) {
-                // Modified Regex to include : " case
-                // (?:\:\s*["“]\s*) matches : " or : “ with spaces
-                const sentenceEnd = /(?:[.?!]\s+)|(?:\:\s*["“]\s*)/;
-                
-                // We scan the whole text. 
-                // Using a callback to handle complex logic is safer.
-                // Find sentence boundaries:
-                const autoCapsRegex = /(^|[\.?!]\s+|:\s*["“]\s*)(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
+                // FIXED REGEX FOR USER REQUIREMENT:
+                // 1. Start of string (^).
+                // 2. Standard: [.?!] followed by whitespace (\s+).
+                // 3. Quote Special: Colon (:), optional space, Quote (["“]), NO SPACE REQUIRED AFTER.
+                //    Regex part: :\s*["“]
+                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“])(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
 
                 processedText = processedText.replace(autoCapsRegex, (match, prefix, mStart, mContent, mEnd, rawWord) => {
                     let targetWord = mContent || rawWord;
                     if (!targetWord) return match;
                     
-                    // Simple logic: just capitalize first letter
                     let cappedWord = targetWord.charAt(0).toUpperCase() + targetWord.slice(1);
                     
                     if (mStart) {
@@ -284,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCounters();
             
             els.inputText.value = ''; saveTempInput();
-            showNotification("Hoàn tất xử lý!");
+            showInlineNotify(els.replaceBtn, "Đã Xong!");
         } catch (e) { console.error(e); showNotification("Lỗi: " + e.message, "error"); }
     }
 
@@ -292,12 +274,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. SPLITTER
     // =========================================================================
     
+    // Clear outputs when switching modes
+    function clearSplitOutputs() {
+        els.splitWrapper.innerHTML = '';
+    }
+
     function updateSplitUI() {
-        // Force sync UI when tab is shown
         const isRegex = document.querySelector('input[name="split-type"][value="regex"]').checked;
         document.querySelector('input[name="split-type"][value="count"]').checked = !isRegex;
         els.splitControlCount.classList.toggle('hidden', isRegex);
         els.splitControlRegex.classList.toggle('hidden', !isRegex);
+        
+        // When switching, clear old data
+        clearSplitOutputs();
+        
+        // If switching to Count mode, render placeholders immediately
+        if (!isRegex) renderSplitPlaceholders(currentSplitMode);
     }
 
     function renderSplitPlaceholders(count) {
@@ -320,20 +312,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.regexMode === 'custom' && state.customRegex) {
             try { return new RegExp(state.customRegex, 'gmi'); } catch(e) { return null; }
         }
-        return null; // Fallback
+        return null; 
     }
 
     function performSplit() {
         const text = els.splitInput.value;
-        if(!text.trim()) return showNotification('Chưa có nội dung!', 'error');
+        if(!text.trim()) { showInlineNotify(els.splitActionBtn, "Chưa có nội dung!"); return; }
+        
         const splitType = document.querySelector('input[name="split-type"]:checked').value;
 
         if (splitType === 'regex') {
             const regex = getRegexFromSettings();
-            if (!regex) return showNotification("Regex chưa hợp lệ! Vui lòng kiểm tra tab Cài Đặt.", "error");
+            if (!regex) { showInlineNotify(els.splitActionBtn, "Lỗi Regex!"); return; }
 
             const matches = [...text.matchAll(regex)];
-            if (matches.length === 0) return showNotification("Không tìm thấy chương nào với Regex hiện tại!", "warning");
+            if (matches.length === 0) { showInlineNotify(els.splitActionBtn, "Không tìm thấy chương!"); return; }
             
             let parts = [];
             for (let i = 0; i < matches.length; i++) {
@@ -344,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 parts.push({ content: chunk, title: title || `Phần ${i+1}` });
             }
             renderFilledSplitGrid(parts); 
-            showNotification(`Đã tìm thấy ${parts.length} chương!`);
+            showInlineNotify(els.splitActionBtn, `Đã chia ${parts.length} phần!`);
         } else {
             const lines = normalizeInput(text).split('\n');
             let chapterHeader = '', contentBody = normalizeInput(text);
@@ -360,19 +353,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (currentPart.length) rawParts.push(currentPart.join('\n\n'));
             
-            const existingBoxes = els.splitWrapper.children;
-            if (existingBoxes.length !== currentSplitMode) renderSplitPlaceholders(currentSplitMode);
-
+            // Re-render based on actual result
+            clearSplitOutputs();
             for(let i = 0; i < currentSplitMode; i++) {
                 let pContent = rawParts[i] || '';
                 let h = `Phần ${i+1}`;
                 if (chapterHeader && pContent) { h = chapterHeader.replace(/(\d+)/, (m, n) => `${n}.${i+1}`); pContent = h + '\n\n' + pContent; }
-                const textArea = document.getElementById(`out-split-${i}`);
-                const headerSpan = existingBoxes[i].querySelector('.split-header span:first-child');
-                const badge = existingBoxes[i].querySelector('.badge');
-                if (textArea) { textArea.value = pContent; if(headerSpan) headerSpan.textContent = pContent ? h : `Phần ${i+1} (Trống)`; if(badge) badge.textContent = countWords(pContent) + ' W'; }
+                
+                const div = document.createElement('div'); div.className = 'split-box';
+                div.innerHTML = `
+                    <div class="split-header"><span>${pContent ? h : `Phần ${i+1} (Trống)`}</span><span class="badge">${countWords(pContent)} W</span></div>
+                    <textarea id="out-split-${i}" class="custom-scrollbar" readonly>${pContent}</textarea>
+                    <div class="split-footer"><button class="btn btn-success full-width copy-split-btn" data-target="out-split-${i}" data-seq="${i+1}">Sao chép ${i+1}</button></div>`;
+                els.splitWrapper.appendChild(div);
             }
-            showNotification(`Đã chia xong!`);
+            bindCopyEvents();
+            showInlineNotify(els.splitActionBtn, "Đã chia xong!");
         }
         els.splitInput.value = ''; saveTempInput();
     }
@@ -396,9 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const el = document.getElementById(e.target.dataset.target);
                 if(el && el.value) { 
                     navigator.clipboard.writeText(el.value); 
-                    e.target.textContent = `Đã chép ${e.target.dataset.seq}!`;
-                    setTimeout(()=>{ e.target.textContent = `Sao chép ${e.target.dataset.seq}`; }, 1500);
-                } else showNotification("Ô trống!", "warning");
+                    showInlineNotify(e.target, "Đã chép!");
+                } else showInlineNotify(e.target, "Trống!");
             };
         });
     }
@@ -427,30 +422,20 @@ document.addEventListener('DOMContentLoaded', () => {
           upd(els.autoCapsBtn, mode.autoCaps, 'Auto Caps');
       }
       
-      // Update Cards UI
       els.formatCards.forEach(card => card.classList.toggle('active', parseInt(card.dataset.format) === state.dialogueMode));
       els.abCapsCards.forEach(card => card.classList.toggle('active', parseInt(card.dataset.abCaps) === state.abnormalCapsMode));
       
-      // Update Regex UI
       document.querySelector(`input[name="regex-preset"][value="${state.regexMode}"]`).checked = true;
       els.customRegexInput.value = state.customRegex || '';
     }
   
-    // Add item to UI. Index is calculated dynamically based on position
     function renderList() {
         els.list.innerHTML = '';
         const mode = state.modes[state.currentMode];
         if (!mode || !mode.pairs) return;
         
-        // Pairs are stored in order. 
-        // Requirement: "New pair at top", "Count reverse (Big on top, 1 on bottom)".
-        // We prepend new pairs to UI.
-        
         mode.pairs.forEach((p, realIndex) => {
-            // realIndex 0 is the oldest (bottom). 
-            // Display Index = realIndex + 1
             const displayIndex = realIndex + 1;
-            
             const item = document.createElement('div'); item.className = 'punctuation-item';
             item.innerHTML = `
                 <div class="index-label">${displayIndex}</div>
@@ -458,32 +443,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" class="replace" placeholder="Thay thế" value="${(p.replace||'').replace(/"/g, '&quot;')}">
                 <button class="remove" data-idx="${realIndex}" tabindex="-1">×</button>
             `;
-            
-            // Listener changes
             item.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
-                // Update state directly on input? Or just debounce save?
-                // Better to update state on save, but here we update array in place for "Save All"
                 p.find = item.querySelector('.find').value;
                 p.replace = item.querySelector('.replace').value;
                 debounceSave();
             }));
-
-            item.querySelector('.remove').onclick = () => { 
-                mode.pairs.splice(realIndex, 1);
-                saveState(); renderList(); 
-            };
-            
-            // Prepend to show new/last items at top
+            item.querySelector('.remove').onclick = () => { mode.pairs.splice(realIndex, 1); saveState(); renderList(); };
             els.list.insertBefore(item, els.list.firstChild);
         });
         checkEmptyState();
     }
     
-    // Add new pair: Push to array end (newest), then re-render
     function addNewPair() {
         state.modes[state.currentMode].pairs.push({ find: '', replace: '' });
         renderList();
-        // Focus on the top input (which is the new one)
         if(els.list.firstChild) els.list.firstChild.querySelector('.find').focus();
     }
 
@@ -508,66 +481,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!lines[0].toLowerCase().includes('find') || !lines[0].toLowerCase().includes('replace')) return showNotification('Lỗi Header CSV!', 'error');
             
             let tempPairs = [];
-            
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim(); if (!line) continue;
                 const cols = parseCSVLine(line);
-                // Expected cols: stt, find, replace, mode (optional)
-                // If 4 cols: cols[0]=stt, cols[1]=find...
-                // If 3 cols (legacy): find, replace, mode
-                // Detect based on header or number of cols? Simplest: Try to parse STT
-                
                 let stt = 0, find = '', replace = '', modeName = 'default';
-                
-                // Heuristic: Check if first col is number
                 if (!isNaN(parseInt(cols[0])) && cols.length >= 3) {
-                     stt = parseInt(cols[0]);
-                     find = cols[1];
-                     replace = cols[2];
-                     modeName = cols[3] || 'default';
+                     stt = parseInt(cols[0]); find = cols[1]; replace = cols[2]; modeName = cols[3] || 'default';
                 } else {
-                    // Legacy format
-                    find = cols[0];
-                    replace = cols[1];
-                    modeName = cols[2] || 'default';
-                    stt = i; // Assign dummy order
+                    find = cols[0]; replace = cols[1]; modeName = cols[2] || 'default'; stt = i;
                 }
-
-                if (find) {
-                    tempPairs.push({ stt, find, replace, modeName });
-                }
+                if (find) tempPairs.push({ stt, find, replace, modeName });
             }
-
-            // Sort by STT (Smallest STT = Oldest = Bottom = First in Array)
             tempPairs.sort((a, b) => a.stt - b.stt);
-
             let count = 0;
             tempPairs.forEach(p => {
                 if (!state.modes[p.modeName]) state.modes[p.modeName] = JSON.parse(JSON.stringify(defaultState.modes.default));
                 state.modes[p.modeName].pairs.push({ find: p.find, replace: p.replace });
                 count++;
             });
-
             saveState(); renderModeSelect(); renderList(); showNotification(`Đã nhập ${count} cặp!`);
         }; reader.readAsText(file);
     }
 
     function exportCSV() {
         let csvContent = "\uFEFFstt,find,replace,mode\n"; 
-        let globalStt = 1;
-        // Export logic: We want STT to reflect order.
-        // In array: Index 0 = STT 1.
         
+        // Loop through each mode
         Object.keys(state.modes).forEach(modeName => {
             const mode = state.modes[modeName];
-            if (mode.pairs) mode.pairs.forEach((p, idx) => { 
-                // Local STT or Global STT? Let's use Global for unique tracking
-                csvContent += `${globalStt},"${(p.find||'').replace(/"/g, '""')}","${(p.replace||'').replace(/"/g, '""')}","${modeName.replace(/"/g, '""')}"\n`; 
-                globalStt++;
+            // RESET STT FOR EACH MODE
+            let localStt = 1;
+            if (mode.pairs) mode.pairs.forEach(p => { 
+                csvContent += `${localStt},"${(p.find||'').replace(/"/g, '""')}","${(p.replace||'').replace(/"/g, '""')}","${modeName.replace(/"/g, '""')}"\n`; 
+                localStt++;
             });
         });
         const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'settings_v23_full.csv'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'settings_v24_reset.csv'; a.click();
     }
 
     function updateCounters() {
@@ -596,12 +546,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initEvents() {
-      // Tabs
       els.tabButtons.forEach(btn => btn.onclick = () => switchTab(btn.dataset.tab));
-      // Sidebar
       els.sidebarBtns.forEach(btn => btn.onclick = () => switchSidebar(btn.dataset.target));
 
-      // Settings Logic
       const toggleHandler = (prop) => { const m = state.modes[state.currentMode]; m[prop] = !m[prop]; saveState(); updateModeUI(); };
       els.matchCaseBtn.onclick = () => toggleHandler('matchCase');
       els.wholeWordBtn.onclick = () => toggleHandler('wholeWord');
@@ -609,7 +556,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       els.modeSelect.onchange = (e) => { state.currentMode = e.target.value; saveState(); renderList(); };
       
-      // Mode CRUD
       document.getElementById('add-mode').onclick = () => { 
           const n = prompt('Tên Mode mới:'); 
           if(n && !state.modes[n]) { state.modes[n] = JSON.parse(JSON.stringify(defaultState.modes.default)); state.currentMode = n; saveState(); renderModeSelect(); renderList(); }
@@ -620,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       els.renameBtn.onclick = () => { 
           const n = prompt('Tên mới:', state.currentMode); 
-          if(n && n !== state.currentMode && !state.modes[n]) { state.modes[n] = state.modes[state.currentMode]; delete state.modes[state.currentMode]; state.currentMode = n; saveState(); renderModeSelect(); }
+          if(n && n !== state.currentMode && !state.modes[n]) { state.modes[n] = state.modes[state.currentMode]; delete state.modes[state.currentMode]; state.currentMode = n; saveState(); renderModeSelect(); renderList(); }
       };
       els.deleteBtn.onclick = () => { 
           if(confirm('Xóa chế độ này?')) { 
@@ -636,11 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('export-settings').onclick = exportCSV;
       document.getElementById('import-settings').onclick = () => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv'; inp.onchange = e => { if(e.target.files.length) importCSV(e.target.files[0]) }; inp.click(); };
       
-      // REPLACEMENT ACTION
+      // BUTTON ACTIONS
       els.replaceBtn.onclick = performReplaceAll;
-      document.getElementById('copy-button').onclick = () => { if(els.outputText.innerText) { navigator.clipboard.writeText(els.outputText.innerText).then(() => { showNotification('Đã sao chép văn bản!'); }); }};
+      els.copyBtn.onclick = () => { 
+          if(els.outputText.innerText) { 
+              navigator.clipboard.writeText(els.outputText.innerText).then(() => { showInlineNotify(els.copyBtn, 'Đã sao chép!'); }); 
+          } else showInlineNotify(els.copyBtn, 'Trống!');
+      };
 
-      // FORMAT OPTION CARDS EVENTS
       els.formatCards.forEach(card => {
           card.onclick = () => {
               state.dialogueMode = parseInt(card.dataset.format);
@@ -648,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
           };
       });
 
-      // ABNORMAL CAPS CARDS EVENTS
       els.abCapsCards.forEach(card => {
           card.onclick = () => {
               state.abnormalCapsMode = parseInt(card.dataset.abCaps);
@@ -656,21 +604,19 @@ document.addEventListener('DOMContentLoaded', () => {
           };
       });
 
-      // REGEX SETTINGS EVENTS
       els.saveRegexBtn.onclick = () => {
-          const selected = document.querySelector('input[name="regex-preset"]:checked').value;
-          state.regexMode = selected;
+          state.regexMode = document.querySelector('input[name="regex-preset"]:checked').value;
           state.customRegex = els.customRegexInput.value;
           saveState();
-          showNotification('Đã lưu cài đặt Regex!');
+          showInlineNotify(els.saveRegexBtn, "Đã Lưu!");
       };
 
-      // SPLIT EVENTS
       els.splitTypeRadios.forEach(radio => radio.addEventListener('change', updateSplitUI));
       document.querySelectorAll('.split-mode-btn').forEach(btn => btn.onclick = () => { 
           document.querySelectorAll('.split-mode-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); 
           currentSplitMode = parseInt(btn.dataset.split); 
-          renderSplitPlaceholders(currentSplitMode);
+          // Only re-render if in count mode
+          if(document.querySelector('input[name="split-type"][value="count"]').checked) renderSplitPlaceholders(currentSplitMode);
       });
       els.splitActionBtn.onclick = performSplit;
       
@@ -682,6 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderList(); 
     loadTempInput(); 
     if(state.activeTab) switchTab(state.activeTab); 
+    // We call updateSplitUI after switching tab to ensure correct UI state
     updateSplitUI();
     
     initEvents();
