@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tiện Ích Của Trịnh Hg - V23 (Full Features)</title>
+  <title>Tiện Ích Của Trịnh Hg - V24 (Final Polish)</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
-<body>
-  
-  <header class="app-header">
+<body class="loading"> <header class="app-header">
     <div class="header-left">
       <h1>Tiện Ích Của Trịnh Hg</h1>
       <div class="donate-info">
@@ -17,19 +15,18 @@
         <span class="donate-details">MB BANK - TRINH THI XUAN HUONG – 0917678211</span>
       </div>
     </div>
-    <div class="header-center">
+    <div class="header-right">
       <nav class="tabs">
-        <button class="tab-button active" data-tab="settings">Cài Đặt</button>
+        <button class="tab-button" data-tab="settings">Cài Đặt</button>
         <button class="tab-button" data-tab="replace">Thay Thế</button>
         <button class="tab-button" data-tab="split">Chia Chương</button>
       </nav>
     </div>
-    <div class="header-right"></div>
   </header>
 
   <main class="app-body">
     
-    <div id="settings" class="tab-content active">
+    <div id="settings" class="tab-content">
       <div class="panel-container settings-layout">
         
         <div class="settings-sidebar">
@@ -46,7 +43,7 @@
             <button class="sidebar-btn" data-target="panel-support">Liên Hệ Hỗ Trợ</button>
         </div>
 
-        <div class="settings-content custom-scrollbar">
+        <div class="settings-content">
             
             <div id="panel-replacements" class="setting-panel active">
                 <div class="panel-header">
@@ -162,7 +159,7 @@
                     </div>
                     
                     <div style="margin-top: 20px;">
-                        <button id="save-regex-settings" class="btn btn-primary">Lưu Cài Đặt Regex</button>
+                        <button id="save-regex-settings" class="btn btn-primary" data-text="Lưu Cài Đặt Regex">Lưu Cài Đặt Regex</button>
                     </div>
                 </div>
             </div>
@@ -180,25 +177,46 @@
             <div id="panel-guide" class="setting-panel">
                 <div class="panel-header"><h2>Hướng Dẫn Sử Dụng</h2></div>
                 <div class="format-container">
-                    <h3>1. Tab Cài Đặt</h3>
-                    <p>Nơi quản lý các luật thay thế, định dạng văn bản và cấu hình regex.</p>
-                    <p>[Ảnh mô tả Cài đặt]</p>
                     
-                    <h3>2. Tab Thay Thế</h3>
-                    <p>Dán văn bản vào ô bên trái, bấm "Thực hiện thay thế". Kết quả sẽ áp dụng: Cặp thay thế -> Viết hoa bất thường -> Auto Caps -> Format hội thoại.</p>
-                    <p>[Ảnh mô tả Thay thế]</p>
+                    <div class="guide-block">
+                        <h3>1. Tab Cài Đặt</h3>
+                        <p>Nơi "đầu não" để bạn cấu hình mọi thứ. Bạn có thể thêm các cặp từ muốn thay thế, chọn kiểu hiển thị hội thoại, hoặc cài đặt Regex để chia chương.</p>
+                        <div class="mockup-window">
+                            <div class="mockup-header">
+                                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                            </div>
+                            <div class="mockup-body">
+                                <div class="mockup-sidebar"></div>
+                                <div class="mockup-content">
+                                    <div class="line w-70"></div>
+                                    <div class="line w-50"></div>
+                                    <div class="line w-90"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                    <h3>3. Tab Chia Chương</h3>
-                    <p>Chia văn bản dài thành các phần nhỏ để dễ đăng tải. Có thể chia theo số lượng hoặc theo Regex đã cài đặt.</p>
+                    <div class="guide-block">
+                        <h3>2. Tab Thay Thế</h3>
+                        <p>Dán văn bản vào, bấm nút để hệ thống tự động xử lý theo thứ tự: Chuẩn hóa -> Thay thế -> Sửa lỗi viết hoa -> Auto Caps -> Format hội thoại.</p>
+                    </div>
+
+                    <div class="guide-block">
+                        <h3>3. Tab Chia Chương</h3>
+                        <p>Dùng để cắt văn bản dài. Chế độ "Số phần" sẽ chia đều số lượng chữ. Chế độ "Regex" sẽ tìm từ khóa (Chương, Hồi...) để cắt chính xác từng chương.</p>
+                    </div>
                 </div>
             </div>
 
             <div id="panel-support" class="setting-panel">
                 <div class="panel-header"><h2>Liên Hệ Hỗ Trợ</h2></div>
-                <div class="format-container" style="text-align: center; padding-top: 40px;">
-                    <p style="font-size: 16px; margin-bottom: 20px;">Nếu gặp lỗi hoặc cần hỗ trợ tính năng, vui lòng liên hệ Admin.</p>
-                    <a href="https://www.facebook.com/trinh.hg.57" target="_blank" class="btn btn-primary" style="padding: 12px 25px; font-size: 14px; text-decoration: none;">
-                        Liên hệ Facebook: Trịnh Hg
+                <div class="format-container support-container">
+                    <p class="support-text">Nếu gặp lỗi hoặc cần hỗ trợ tính năng, vui lòng liên hệ Admin.</p>
+                    <a href="https://www.facebook.com/trinh.hg.57" target="_blank" class="btn btn-primary support-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.03 2 11C2 13.66 3.39 16.04 5.58 17.59L5 21L8.5 19.08C9.59 19.38 10.76 19.56 12 19.56C17.52 19.56 22 15.53 22 10.56C22 5.59 17.52 2 12 2ZM13.3 14.3L10.75 11.5L5.8 14.3L11.2 8.5L13.8 11.3L18.7 8.5L13.3 14.3Z"/>
+                        </svg>
+                        <span>Liên hệ Facebook: Trịnh Hg</span>
                     </a>
                 </div>
             </div>
@@ -216,7 +234,7 @@
           </div>
           <textarea id="input-text" class="custom-scrollbar" placeholder="Dán văn bản cần xử lý vào đây..."></textarea>
           <div class="pane-footer">
-            <button id="replace-button" class="btn btn-primary full-width">THỰC HIỆN THAY THẾ</button>
+            <button id="replace-button" class="btn btn-primary full-width" data-text="THỰC HIỆN THAY THẾ">THỰC HIỆN THAY THẾ</button>
           </div>
         </div>
 
@@ -231,7 +249,7 @@
           </div>
           <div id="output-text" class="custom-scrollbar output-div" contenteditable="false" data-placeholder="Kết quả sẽ hiện ra ở đây..."></div>
           <div class="pane-footer">
-            <button id="copy-button" class="btn btn-success full-width">Sao chép văn bản (Text Only)</button>
+            <button id="copy-button" class="btn btn-success full-width" data-text="Sao chép văn bản (Text Only)">Sao chép văn bản (Text Only)</button>
           </div>
         </div>
       </div>
@@ -273,7 +291,7 @@
           </div>
           <textarea id="split-input-text" class="custom-scrollbar" placeholder="Dán cả bộ truyện vào đây..."></textarea>
           <div class="split-footer">
-            <button id="split-action-btn" class="btn btn-primary full-width">Thực Hiện Chia</button>
+            <button id="split-action-btn" class="btn btn-primary full-width" data-text="Thực Hiện Chia">Thực Hiện Chia</button>
           </div>
         </div>
         <div id="split-outputs-wrapper" class="outputs-wrapper"></div>
