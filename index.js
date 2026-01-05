@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. CONFIGURATION & STATE
     // =========================================================================
     
-    const STORAGE_KEY = 'trinh_hg_settings_v24_final';
-    const INPUT_STATE_KEY = 'trinh_hg_input_state_v24';
+    const STORAGE_KEY = 'trinh_hg_settings_v25_tech_upd';
+    const INPUT_STATE_KEY = 'trinh_hg_input_state_v25';
   
     // MARKERS
     const MARK_REP_START  = '\uE000'; 
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     const defaultState = {
       currentMode: 'default',
-      activeTab: 'settings', // Default tab
+      activeTab: 'settings',
       dialogueMode: 0, 
       abnormalCapsMode: 0,
       regexMode: 'chapter',
@@ -34,14 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultState;
     if (!state.activeTab) state.activeTab = 'settings';
     
-    // ANTI-FLICKER LOGIC: Apply active tab IMMEDIATELY
+    // ANTI-FLICKER LOGIC
     document.querySelectorAll('.tab-button').forEach(b => {
         b.classList.toggle('active', b.dataset.tab === state.activeTab);
     });
     document.querySelectorAll('.tab-content').forEach(c => {
         c.classList.toggle('active', c.id === state.activeTab);
     });
-    // Remove loading class to show content
     document.body.classList.remove('loading');
 
     // Ensure safe state
@@ -61,14 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. DOM ELEMENTS
     // =========================================================================
     const els = {
-      // Main Tabs
       tabButtons: document.querySelectorAll('.tab-button'),
-      
-      // Sidebar & Panels
       sidebarBtns: document.querySelectorAll('.sidebar-btn'),
       settingPanels: document.querySelectorAll('.setting-panel'),
-      
-      // Settings Controls
       modeSelect: document.getElementById('mode-select'),
       list: document.getElementById('punctuation-list'),
       matchCaseBtn: document.getElementById('match-case'),
@@ -77,29 +71,21 @@ document.addEventListener('DOMContentLoaded', () => {
       renameBtn: document.getElementById('rename-mode'),
       deleteBtn: document.getElementById('delete-mode'),
       emptyState: document.getElementById('empty-state'),
-      
-      // Cards & Regex
       formatCards: document.querySelectorAll('.format-card:not(.ab-caps-card)'),
       abCapsCards: document.querySelectorAll('.ab-caps-card'),
       regexRadios: document.getElementsByName('regex-preset'),
       customRegexInput: document.getElementById('custom-regex-input'),
       saveRegexBtn: document.getElementById('save-regex-settings'),
-
-      // Input/Output
       inputText: document.getElementById('input-text'),
       outputText: document.getElementById('output-text'),
       replaceBtn: document.getElementById('replace-button'),
       copyBtn: document.getElementById('copy-button'),
-      
-      // Split
       splitInput: document.getElementById('split-input-text'),
       splitWrapper: document.getElementById('split-outputs-wrapper'),
       splitTypeRadios: document.getElementsByName('split-type'),
       splitControlCount: document.getElementById('split-type-count'),
       splitControlRegex: document.getElementById('split-type-regex'),
       splitActionBtn: document.getElementById('split-action-btn'),
-      
-      // Counters
       inputCount: document.getElementById('input-word-count'),
       outputCount: document.getElementById('output-word-count'),
       replaceCountBadge: document.getElementById('count-replace'),
@@ -121,17 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { note.style.opacity = '0'; setTimeout(() => note.remove(), 300); }, 2000); 
     }
 
-    // NEW: Inline Notification for Buttons
     function showInlineNotify(btn, msg) {
         const originalText = btn.dataset.text || btn.textContent;
-        // Save original text if not saved yet
         if (!btn.dataset.text) btn.dataset.text = originalText;
-        
         btn.textContent = msg;
-        // Revert after 1.5s
-        setTimeout(() => {
-            btn.textContent = originalText;
-        }, 1500);
+        setTimeout(() => { btn.textContent = originalText; }, 1500);
     }
     
     function escapeHTML(str) { return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
@@ -181,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let countReplace = 0;
             let countCaps = 0;
 
-            // --- STEP 1: USER REPLACEMENTS ---
+            // STEP 1: USER REPLACEMENTS
             if (mode.pairs && mode.pairs.length > 0) {
                 const rules = mode.pairs
                     .filter(p => p.find && p.find.trim())
@@ -207,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // --- STEP 2: ABNORMAL CAPS ---
+            // STEP 2: ABNORMAL CAPS
             if (state.abnormalCapsMode > 0) {
                 const abnormalRegex = /(?<=[\p{Ll},;]\s+)([\p{Lu}][\p{Ll}]+)/gum;
                 processedText = processedText.replace(abnormalRegex, (match, p1) => {
@@ -216,14 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // --- STEP 3: AUTO CAPS ---
+            // STEP 3: AUTO CAPS (FIXED FOR REQUIREMENT 1)
             if (mode.autoCaps) {
-                // FIXED REGEX FOR USER REQUIREMENT:
-                // 1. Start of string (^).
-                // 2. Standard: [.?!] followed by whitespace (\s+).
-                // 3. Quote Special: Colon (:), optional space, Quote (["“]), NO SPACE REQUIRED AFTER.
-                //    Regex part: :\s*["“]
-                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“])(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
+                // Regex Breakdown:
+                // 1. Start of line (^)
+                // 2. [.?!] + space
+                // 3. : + (optional space) + " + (optional space)
+                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“]\s*)(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
 
                 processedText = processedText.replace(autoCapsRegex, (match, prefix, mStart, mContent, mEnd, rawWord) => {
                     let targetWord = mContent || rawWord;
@@ -242,13 +221,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // --- STEP 4: DIALOGUE FORMATTING ---
+            // STEP 4: DIALOGUE FORMATTING
             processedText = formatDialogue(processedText, state.dialogueMode);
 
-            // --- STEP 5: SPACING ---
+            // STEP 5: SPACING
             processedText = processedText.split(/\r?\n/).map(line => line.trim()).filter(line => line !== '').join('\n\n');
 
-            // --- RENDER HTML ---
+            // RENDER HTML
             let finalHTML = ''; let buffer = '';
             for (let i = 0; i < processedText.length; i++) {
                 const c = processedText[i];
@@ -273,22 +252,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // 5. SPLITTER
     // =========================================================================
-    
-    // Clear outputs when switching modes
-    function clearSplitOutputs() {
-        els.splitWrapper.innerHTML = '';
-    }
+    function clearSplitOutputs() { els.splitWrapper.innerHTML = ''; }
 
     function updateSplitUI() {
         const isRegex = document.querySelector('input[name="split-type"][value="regex"]').checked;
         document.querySelector('input[name="split-type"][value="count"]').checked = !isRegex;
         els.splitControlCount.classList.toggle('hidden', isRegex);
         els.splitControlRegex.classList.toggle('hidden', !isRegex);
-        
-        // When switching, clear old data
         clearSplitOutputs();
-        
-        // If switching to Count mode, render placeholders immediately
         if (!isRegex) renderSplitPlaceholders(currentSplitMode);
     }
 
@@ -318,13 +289,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function performSplit() {
         const text = els.splitInput.value;
         if(!text.trim()) { showInlineNotify(els.splitActionBtn, "Chưa có nội dung!"); return; }
-        
         const splitType = document.querySelector('input[name="split-type"]:checked').value;
 
         if (splitType === 'regex') {
             const regex = getRegexFromSettings();
             if (!regex) { showInlineNotify(els.splitActionBtn, "Lỗi Regex!"); return; }
-
             const matches = [...text.matchAll(regex)];
             if (matches.length === 0) { showInlineNotify(els.splitActionBtn, "Không tìm thấy chương!"); return; }
             
@@ -345,21 +314,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const paragraphs = contentBody.split('\n').filter(p => p.trim());
             const targetWords = Math.ceil(countWords(contentBody) / currentSplitMode);
             let currentPart = [], currentCount = 0, rawParts = [];
-            
             for (let p of paragraphs) {
                 const wCount = countWords(p);
                 if (currentCount + wCount > targetWords && rawParts.length < currentSplitMode - 1) { rawParts.push(currentPart.join('\n\n')); currentPart = [p]; currentCount = wCount; } 
                 else { currentPart.push(p); currentCount += wCount; }
             }
             if (currentPart.length) rawParts.push(currentPart.join('\n\n'));
-            
-            // Re-render based on actual result
             clearSplitOutputs();
             for(let i = 0; i < currentSplitMode; i++) {
                 let pContent = rawParts[i] || '';
                 let h = `Phần ${i+1}`;
                 if (chapterHeader && pContent) { h = chapterHeader.replace(/(\d+)/, (m, n) => `${n}.${i+1}`); pContent = h + '\n\n' + pContent; }
-                
                 const div = document.createElement('div'); div.className = 'split-box';
                 div.innerHTML = `
                     <div class="split-header"><span>${pContent ? h : `Phần ${i+1} (Trống)`}</span><span class="badge">${countWords(pContent)} W</span></div>
@@ -443,10 +408,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" class="replace" placeholder="Thay thế" value="${(p.replace||'').replace(/"/g, '&quot;')}">
                 <button class="remove" data-idx="${realIndex}" tabindex="-1">×</button>
             `;
+            // Yêu cầu 3: LOẠI BỎ debounceSave() ở sự kiện input. Chỉ cập nhật object trong memory.
             item.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
                 p.find = item.querySelector('.find').value;
                 p.replace = item.querySelector('.replace').value;
-                debounceSave();
+                // KHÔNG GỌI saveState() Ở ĐÂY!
             }));
             item.querySelector('.remove').onclick = () => { mode.pairs.splice(realIndex, 1); saveState(); renderList(); };
             els.list.insertBefore(item, els.list.firstChild);
@@ -464,7 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.emptyState.classList.toggle('hidden', state.modes[state.currentMode].pairs.length > 0); 
     }
 
-    // CSV Logic
     function parseCSVLine(text) {
         const result = []; let cell = ''; let inQuotes = false;
         for (let i = 0; i < text.length; i++) {
@@ -505,11 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function exportCSV() {
         let csvContent = "\uFEFFstt,find,replace,mode\n"; 
-        
-        // Loop through each mode
         Object.keys(state.modes).forEach(modeName => {
             const mode = state.modes[modeName];
-            // RESET STT FOR EACH MODE
             let localStt = 1;
             if (mode.pairs) mode.pairs.forEach(p => { 
                 csvContent += `${localStt},"${(p.find||'').replace(/"/g, '""')}","${(p.replace||'').replace(/"/g, '""')}","${modeName.replace(/"/g, '""')}"\n`; 
@@ -517,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'settings_v24_reset.csv'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'settings_v25_tech.csv'; a.click();
     }
 
     function updateCounters() {
@@ -525,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.outputCount.textContent = 'Words: ' + countWords(els.outputText.innerText);
       els.splitInputCount.textContent = 'Words: ' + countWords(els.splitInput.value);
     }
-    function debounceSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { saveTempInput(); if(state.activeTab==='settings') saveState(); }, 500); }
+    function debounceSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { saveTempInput(); /* Lưu ý: Không lưu state cài đặt ở đây nữa cho danh sách */ if(state.activeTab !== 'settings') saveState(); }, 500); }
     function saveTempInput() { localStorage.setItem(INPUT_STATE_KEY, JSON.stringify({ inputText: els.inputText.value, splitInput: els.splitInput.value })); }
     function loadTempInput() {
       const saved = JSON.parse(localStorage.getItem(INPUT_STATE_KEY));
@@ -549,6 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.tabButtons.forEach(btn => btn.onclick = () => switchTab(btn.dataset.tab));
       els.sidebarBtns.forEach(btn => btn.onclick = () => switchSidebar(btn.dataset.target));
 
+      // Yêu cầu 4: Trạng thái nút theo chế độ
       const toggleHandler = (prop) => { const m = state.modes[state.currentMode]; m[prop] = !m[prop]; saveState(); updateModeUI(); };
       els.matchCaseBtn.onclick = () => toggleHandler('matchCase');
       els.wholeWordBtn.onclick = () => toggleHandler('wholeWord');
@@ -578,11 +541,11 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       document.getElementById('add-pair').onclick = addNewPair;
+      // Yêu cầu 3: Chỉ lưu khi bấm nút này
       document.getElementById('save-settings').onclick = () => { saveState(); showNotification('Đã lưu tất cả!'); };
       document.getElementById('export-settings').onclick = exportCSV;
       document.getElementById('import-settings').onclick = () => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv'; inp.onchange = e => { if(e.target.files.length) importCSV(e.target.files[0]) }; inp.click(); };
       
-      // BUTTON ACTIONS
       els.replaceBtn.onclick = performReplaceAll;
       els.copyBtn.onclick = () => { 
           if(els.outputText.innerText) { 
@@ -615,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.split-mode-btn').forEach(btn => btn.onclick = () => { 
           document.querySelectorAll('.split-mode-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); 
           currentSplitMode = parseInt(btn.dataset.split); 
-          // Only re-render if in count mode
           if(document.querySelector('input[name="split-type"][value="count"]').checked) renderSplitPlaceholders(currentSplitMode);
       });
       els.splitActionBtn.onclick = performSplit;
@@ -623,13 +585,10 @@ document.addEventListener('DOMContentLoaded', () => {
       [els.inputText, els.splitInput].forEach(el => el.addEventListener('input', () => { updateCounters(); debounceSave(); }));
     }
 
-    // INIT
     renderModeSelect(); 
     renderList(); 
     loadTempInput(); 
     if(state.activeTab) switchTab(state.activeTab); 
-    // We call updateSplitUI after switching tab to ensure correct UI state
     updateSplitUI();
-    
     initEvents();
 });
