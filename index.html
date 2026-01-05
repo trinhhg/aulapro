@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tiện Ích Của Trịnh Hg - V24 (Final Polish)</title>
+  <title>Tiện Ích Của Trịnh Hg - V25 (Technical Update)</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="index.css">
 </head>
-<body class="loading"> <header class="app-header">
+<body class="loading">
+  
+  <header class="app-header">
     <div class="header-left">
       <h1>Tiện Ích Của Trịnh Hg</h1>
       <div class="donate-info">
@@ -177,34 +179,21 @@
             <div id="panel-guide" class="setting-panel">
                 <div class="panel-header"><h2>Hướng Dẫn Sử Dụng</h2></div>
                 <div class="format-container">
-                    
                     <div class="guide-block">
                         <h3>1. Tab Cài Đặt</h3>
-                        <p>Nơi "đầu não" để bạn cấu hình mọi thứ. Bạn có thể thêm các cặp từ muốn thay thế, chọn kiểu hiển thị hội thoại, hoặc cài đặt Regex để chia chương.</p>
+                        <p>Nơi cấu hình các quy tắc thay thế. <strong>Lưu ý:</strong> Các thay đổi trong danh sách cặp từ chỉ được lưu khi bạn bấm nút "Lưu tất cả". Nếu F5 khi chưa lưu, dữ liệu mới sẽ mất.</p>
                         <div class="mockup-window">
-                            <div class="mockup-header">
-                                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-                            </div>
+                            <div class="mockup-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                             <div class="mockup-body">
                                 <div class="mockup-sidebar"></div>
                                 <div class="mockup-content">
-                                    <div class="line w-70"></div>
-                                    <div class="line w-50"></div>
-                                    <div class="line w-90"></div>
+                                    <div class="line w-70"></div><div class="line w-50"></div><div class="line w-90"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="guide-block">
-                        <h3>2. Tab Thay Thế</h3>
-                        <p>Dán văn bản vào, bấm nút để hệ thống tự động xử lý theo thứ tự: Chuẩn hóa -> Thay thế -> Sửa lỗi viết hoa -> Auto Caps -> Format hội thoại.</p>
-                    </div>
-
-                    <div class="guide-block">
-                        <h3>3. Tab Chia Chương</h3>
-                        <p>Dùng để cắt văn bản dài. Chế độ "Số phần" sẽ chia đều số lượng chữ. Chế độ "Regex" sẽ tìm từ khóa (Chương, Hồi...) để cắt chính xác từng chương.</p>
-                    </div>
+                    <div class="guide-block"><h3>2. Tab Thay Thế</h3><p>Dán văn bản và bấm "Thực hiện". Hệ thống xử lý theo: Chuẩn hóa -> Thay thế -> Lỗi viết hoa -> Auto Caps -> Format.</p></div>
+                    <div class="guide-block"><h3>3. Tab Chia Chương</h3><p>Chia văn bản dài thành nhiều phần nhỏ để tiện đăng tải.</p></div>
                 </div>
             </div>
 
@@ -213,9 +202,7 @@
                 <div class="format-container support-container">
                     <p class="support-text">Nếu gặp lỗi hoặc cần hỗ trợ tính năng, vui lòng liên hệ Admin.</p>
                     <a href="https://www.facebook.com/trinh.hg.57" target="_blank" class="btn btn-primary support-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2C6.48 2 2 6.03 2 11C2 13.66 3.39 16.04 5.58 17.59L5 21L8.5 19.08C9.59 19.38 10.76 19.56 12 19.56C17.52 19.56 22 15.53 22 10.56C22 5.59 17.52 2 12 2ZM13.3 14.3L10.75 11.5L5.8 14.3L11.2 8.5L13.8 11.3L18.7 8.5L13.3 14.3Z"/>
-                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.03 2 11C2 13.66 3.39 16.04 5.58 17.59L5 21L8.5 19.08C9.59 19.38 10.76 19.56 12 19.56C17.52 19.56 22 15.53 22 10.56C22 5.59 17.52 2 12 2ZM13.3 14.3L10.75 11.5L5.8 14.3L11.2 8.5L13.8 11.3L18.7 8.5L13.3 14.3Z"/></svg>
                         <span>Liên hệ Facebook: Trịnh Hg</span>
                     </a>
                 </div>
