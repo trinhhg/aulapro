@@ -22,16 +22,16 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* === HEADER (Yêu cầu 5: Tăng khoảng cách) === */
+/* === HEADER (Yêu cầu 4: Thu hẹp chiều cao) === */
 .app-header {
-  background: white; border-bottom: 1px solid #e5e7eb; padding: 10px 20px; /* Tăng padding */
-  height: 70px; /* Tăng chiều cao để thoáng hơn */
+  background: white; border-bottom: 1px solid #e5e7eb; padding: 0 20px; 
+  height: 50px; /* Về lại kích thước gọn gàng */
   display: flex; justify-content: space-between; align-items: center;
   flex-shrink: 0; z-index: 100; position: sticky; top: 0;
 }
 .header-left { display: flex; flex-direction: column; }
 .header-right { height: 100%; display: flex; align-items: flex-end; }
-.header-left h1 { margin: 0; font-size: 16px; color: #111827; font-weight: 700; margin-bottom: 4px; }
+.header-left h1 { margin: 0; font-size: 16px; color: #111827; font-weight: 700; margin-bottom: 2px; }
 
 /* DONATE STYLES */
 .donate-info { font-size: 11px; display: flex; align-items: center; gap: 5px; }
@@ -49,11 +49,11 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 /* === TABS === */
 .tabs { display: flex; gap: 5px; height: 100%; }
 .tab-button {
-  border: none; background: transparent; padding: 0 25px; height: 45px;
+  border: none; background: transparent; padding: 0 25px; height: 100%; /* Full height */
   cursor: pointer; font-weight: 600; color: #6b7280;
   border-bottom: 3px solid transparent; transition: all 0.2s;
   font-size: 13px; text-transform: uppercase;
-  margin-bottom: -10px; /* Căn chỉnh lại vì header cao hơn */
+  margin-bottom: 0;
 }
 .tab-button:hover { color: #2563eb; background: #f9fafb; }
 .tab-button.active { color: #2563eb; border-bottom-color: #2563eb; background: linear-gradient(to top, #eff6ff, transparent); }
@@ -63,25 +63,20 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .tab-content { display: none; width: 100%; flex-direction: column; }
 .tab-content.active { display: flex; }
 
-/* === SETTINGS LAYOUT (Yêu cầu 2: Căn lề full-width) === */
+/* === SETTINGS LAYOUT === */
 .settings-layout {
     display: flex;
     flex-direction: row;
     background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    /* Bỏ max-width: 1200px cũ, để width 100% giống tab Replace */
-    width: 100%; 
-    margin: 0; 
-    align-items: flex-start;
-    min-height: calc(100vh - 120px);
+    width: 100%; margin: 0; align-items: flex-start;
+    min-height: calc(100vh - 100px); /* Adjust height calculation */
 }
 
 /* Sidebar */
 .settings-sidebar {
     width: 240px; background: #f9fafb; border-right: 1px solid #e5e7eb;
     display: flex; flex-direction: column; padding: 20px 0;
-    flex-shrink: 0; 
-    position: sticky; top: 0; 
-    align-self: flex-start;
+    flex-shrink: 0; position: sticky; top: 0; align-self: flex-start;
 }
 .sidebar-category-title {
     padding: 15px 20px 5px; font-size: 11px; font-weight: 800; color: #9ca3af; 
@@ -97,10 +92,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .sidebar-btn.active { background: white; color: #2563eb; border-left-color: #2563eb; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
 /* Content */
-.settings-content { 
-    flex: 1; display: flex; flex-direction: column; 
-    width: 100%; min-height: 400px;
-}
+.settings-content { flex: 1; display: flex; flex-direction: column; width: 100%; min-height: 400px; }
 .setting-panel { display: none; flex-direction: column; width: 100%; }
 .setting-panel.active { display: flex; }
 
@@ -123,10 +115,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .format-card.active .card-header { background: #dbeafe; color: #1e40af; border-bottom-color: #bfdbfe; }
 .radio-circle { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #d1d5db; position: relative; }
 .format-card.active .radio-circle { border-color: #2563eb; background: white; }
-.format-card.active .radio-circle::after {
-    content: ''; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px;
-    background: #2563eb; border-radius: 50%;
-}
+.format-card.active .radio-circle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; background: #2563eb; border-radius: 50%; }
 .card-body { padding: 15px; font-size: 14px; color: #1f2937; line-height: 1.4; font-family: 'Montserrat', sans-serif; }
 .card-body .dim { color: #9ca3af; }
 
@@ -206,7 +195,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .punctuation-item button.remove { width: 28px; height: 28px; border-radius: 4px; border: none; background: #fee2e2; color: #dc2626; cursor: pointer; }
 
 /* REPLACE PANE */
-#replace { height: calc(100vh - 120px); } /* Điều chỉnh height theo header mới */
+#replace { height: calc(100vh - 100px); } 
 .split-pane { display: flex; gap: 15px; height: 100%; min-height: 0; }
 .pane { flex: 1; display: flex; flex-direction: column; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; height: 100%; min-height: 0; }
 .pane-header { padding: 10px 15px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
@@ -245,12 +234,12 @@ mark.hl-orange { background-color: #fdba74; color: #000; border-radius: 2px; pad
     .sidebar-btn { padding: 10px 20px; }
 }
 
-/* === NOTIFICATION (Yêu cầu 6: Vị trí an toàn) === */
+/* === NOTIFICATION === */
 #notification-container { 
     position: fixed; 
-    top: 80px; /* Thấp hơn header (70px) + 10px buffer */
+    top: 60px; /* Thấp hơn header (50px) + 10px */
     right: 20px; 
-    z-index: 99; /* Đủ cao nhưng thấp hơn header (100) */
+    z-index: 99; 
     display: flex; flex-direction: column; gap: 10px; align-items: flex-end; 
 }
 .notification { padding: 12px 20px; border-radius: 6px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 4px 8px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out; }
