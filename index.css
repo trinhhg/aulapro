@@ -10,7 +10,7 @@ body {
   color: #374151;
 }
 
-/* ANTI-FLICKER: Ẩn mọi thứ cho đến khi JS load xong tab */
+/* ANTI-FLICKER */
 body.loading .tab-content { display: none !important; }
 
 /* FONT CHỮ */
@@ -22,9 +22,10 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* === HEADER === */
+/* === HEADER (Yêu cầu 5: Tăng khoảng cách) === */
 .app-header {
-  background: white; border-bottom: 1px solid #e5e7eb; padding: 0 20px; height: 60px;
+  background: white; border-bottom: 1px solid #e5e7eb; padding: 10px 20px; /* Tăng padding */
+  height: 70px; /* Tăng chiều cao để thoáng hơn */
   display: flex; justify-content: space-between; align-items: center;
   flex-shrink: 0; z-index: 100; position: sticky; top: 0;
 }
@@ -52,6 +53,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
   cursor: pointer; font-weight: 600; color: #6b7280;
   border-bottom: 3px solid transparent; transition: all 0.2s;
   font-size: 13px; text-transform: uppercase;
+  margin-bottom: -10px; /* Căn chỉnh lại vì header cao hơn */
 }
 .tab-button:hover { color: #2563eb; background: #f9fafb; }
 .tab-button.active { color: #2563eb; border-bottom-color: #2563eb; background: linear-gradient(to top, #eff6ff, transparent); }
@@ -59,18 +61,18 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 /* === MAIN CONTENT === */
 .app-body { flex: 1; padding: 15px; display: flex; flex-direction: column; height: auto; }
 .tab-content { display: none; width: 100%; flex-direction: column; }
-/* Active tab is handled by JS + CSS */
 .tab-content.active { display: flex; }
 
-/* === SETTINGS LAYOUT (PAGE SCROLL) === */
+/* === SETTINGS LAYOUT (Yêu cầu 2: Căn lề full-width) === */
 .settings-layout {
     display: flex;
     flex-direction: row;
-    /* Loại bỏ height fixed để sidebar cuộn theo trang */
     background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    max-width: 1200px; margin: 0 auto; width: 100%;
-    align-items: flex-start; /* Sidebar ko bị stretch */
-    min-height: calc(100vh - 100px);
+    /* Bỏ max-width: 1200px cũ, để width 100% giống tab Replace */
+    width: 100%; 
+    margin: 0; 
+    align-items: flex-start;
+    min-height: calc(100vh - 120px);
 }
 
 /* Sidebar */
@@ -78,7 +80,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
     width: 240px; background: #f9fafb; border-right: 1px solid #e5e7eb;
     display: flex; flex-direction: column; padding: 20px 0;
     flex-shrink: 0; 
-    position: sticky; top: 0; /* Sticky sidebar */
+    position: sticky; top: 0; 
     align-self: flex-start;
 }
 .sidebar-category-title {
@@ -94,7 +96,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .sidebar-btn:hover { background: #f3f4f6; color: #111827; }
 .sidebar-btn.active { background: white; color: #2563eb; border-left-color: #2563eb; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-/* Content - Tận dụng hết khoảng trống */
+/* Content */
 .settings-content { 
     flex: 1; display: flex; flex-direction: column; 
     width: 100%; min-height: 400px;
@@ -128,16 +130,13 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .card-body { padding: 15px; font-size: 14px; color: #1f2937; line-height: 1.4; font-family: 'Montserrat', sans-serif; }
 .card-body .dim { color: #9ca3af; }
 
-/* REGEX SETTINGS STYLES */
-.regex-option-row {
-    background: white; border: 1px solid #e5e7eb; border-radius: 8px;
-    padding: 15px; margin-bottom: 10px;
-}
+/* REGEX SETTINGS */
+.regex-option-row { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
 .regex-radio { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 5px; }
 .regex-detail { font-size: 12px; color: #6b7280; margin-left: 26px; }
 .full-width-input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #d1d5db; border-radius: 4px; font-family: monospace; }
 
-/* === GUIDE ANIMATION (SKELETON) === */
+/* GUIDE ANIMATION */
 .guide-block { margin-bottom: 30px; }
 .mockup-window {
     width: 100%; max-width: 500px; height: 120px;
@@ -145,10 +144,7 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     display: flex; flex-direction: column; overflow: hidden; margin-top: 10px;
 }
-.mockup-header {
-    height: 24px; background: #f3f4f6; border-bottom: 1px solid #e5e7eb;
-    display: flex; align-items: center; padding-left: 10px; gap: 6px;
-}
+.mockup-header { height: 24px; background: #f3f4f6; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; padding-left: 10px; gap: 6px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
 .dot.red { background: #f87171; } .dot.yellow { background: #facc15; } .dot.green { background: #4ade80; }
 .mockup-body { flex: 1; display: flex; padding: 10px; gap: 10px; }
@@ -158,22 +154,14 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .line.w-70 { width: 70%; } .line.w-50 { width: 50%; } .line.w-90 { width: 90%; }
 .mockup-window:hover .line { background: #d1d5db; transition: 0.3s; }
 
-/* === SUPPORT BUTTON === */
+/* SUPPORT */
 .support-container { text-align: center; padding-top: 40px; }
 .support-text { font-size: 16px; margin-bottom: 20px; font-weight: 600; color: #4b5563; }
-.support-btn {
-    padding: 12px 25px; font-size: 14px; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 10px;
-    transition: transform 0.2s;
-}
+.support-btn { padding: 12px 25px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: transform 0.2s; }
 .support-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
 
-/* === BUTTONS & COMPONENTS === */
-.btn {
-  padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
-  font-size: 12px; font-weight: 600; transition: all 0.2s;
-  display: inline-flex; align-items: center; justify-content: center;
-}
+/* BUTTONS */
+.btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
 .btn:active { transform: scale(0.98); }
 .btn-primary { background: #2563eb; color: white; }
 .btn-primary:hover { background: #1d4ed8; }
@@ -206,10 +194,8 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .mode-actions { display: flex; gap: 8px; align-items: center; }
 .select-wrapper { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-right: 10px; }
 #mode-select { padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; }
-
 .toolbar { padding: 10px 20px; background: #f9fafb; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .toolbar-group { display: flex; gap: 8px; }
-
 .list-actions { padding: 10px 20px; display: flex; gap: 10px; background: white; border-bottom: 1px solid #f3f4f6; }
 .list-container { padding: 10px 20px; }
 
@@ -219,8 +205,8 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .punctuation-item input { flex: 1; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 13px; }
 .punctuation-item button.remove { width: 28px; height: 28px; border-radius: 4px; border: none; background: #fee2e2; color: #dc2626; cursor: pointer; }
 
-/* === REPLACE PANE === */
-#replace { height: calc(100vh - 100px); } 
+/* REPLACE PANE */
+#replace { height: calc(100vh - 120px); } /* Điều chỉnh height theo header mới */
 .split-pane { display: flex; gap: 15px; height: 100%; min-height: 0; }
 .pane { flex: 1; display: flex; flex-direction: column; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; height: 100%; min-height: 0; }
 .pane-header { padding: 10px 15px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
@@ -230,12 +216,12 @@ textarea, input, .output-div { font-family: 'Montserrat', sans-serif !important;
 .output-div:empty::before { content: attr(data-placeholder); color: #9ca3af; pointer-events: none; }
 .pane-footer { padding: 10px; border-top: 1px solid #e5e7eb; background: #f9fafb; flex-shrink: 0; }
 
-/* HIGHLIGHT STYLES */
+/* HIGHLIGHTS */
 mark.hl-yellow { background-color: #fde047; color: #000; border-radius: 2px; padding: 0 1px; border-bottom: 2px solid #eab308; display: inline; }
 mark.hl-blue { background-color: #93c5fd; color: #000; border-radius: 2px; padding: 0 1px; border-bottom: 2px solid #3b82f6; display: inline; }
 mark.hl-orange { background-color: #fdba74; color: #000; border-radius: 2px; padding: 0 1px; border-bottom: 2px solid #f97316; display: inline; }
 
-/* === SPLIT TAB === */
+/* SPLIT TAB */
 .split-controls-wrapper { background: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .split-mode-selector { display: flex; gap: 20px; font-size: 13px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 8px; }
 .split-mode-selector label { cursor: pointer; display: flex; align-items: center; gap: 5px; }
@@ -259,8 +245,14 @@ mark.hl-orange { background-color: #fdba74; color: #000; border-radius: 2px; pad
     .sidebar-btn { padding: 10px 20px; }
 }
 
-/* === NOTIFICATION === */
-#notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+/* === NOTIFICATION (Yêu cầu 6: Vị trí an toàn) === */
+#notification-container { 
+    position: fixed; 
+    top: 80px; /* Thấp hơn header (70px) + 10px buffer */
+    right: 20px; 
+    z-index: 99; /* Đủ cao nhưng thấp hơn header (100) */
+    display: flex; flex-direction: column; gap: 10px; align-items: flex-end; 
+}
 .notification { padding: 12px 20px; border-radius: 6px; color: white; font-size: 13px; font-weight: 600; box-shadow: 0 4px 8px rgba(0,0,0,0.15); animation: slideIn 0.3s ease-out; }
 .notification.success { background: #10b981; border-left: 4px solid #047857; }
 .notification.error { background: #ef4444; border-left: 4px solid #b91c1c; }
