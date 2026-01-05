@@ -205,13 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // STEP 3: AUTO CAPS (FIXED REGEX LOGIC)
+            // STEP 3: AUTO CAPS (Fixed Regex for : " case)
             if (mode.autoCaps) {
-                // Regex Giải thích:
-                // 1. ^ : Đầu dòng
-                // 2. [.?!]\s+ : Dấu câu kết thúc câu + khoảng trắng
-                // 3. :\s*["“]\s* : Dấu hai chấm + (space tùy chọn) + Dấu ngoặc kép + (space tùy chọn)
-                //    -> Cái này bắt được cả trường hợp `: "tôi` (không space) và `: " tôi` (có space)
+                // Regex Breakdown:
+                // 1. Start of line (^)
+                // 2. [.?!] + space
+                // 3. : + (optional space) + " (QUOTE ONLY, NO SPACE REQUIRED AFTER)
                 const autoCapsRegex = /(^|[.?!]\s+|:\s*["“]\s*)(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
 
                 processedText = processedText.replace(autoCapsRegex, (match, prefix, mStart, mContent, mEnd, rawWord) => {
