@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. CONFIGURATION & STATE
     // =========================================================================
     
-    const STORAGE_KEY = 'trinh_hg_settings_v26_fixed';
-    const INPUT_STATE_KEY = 'trinh_hg_input_state_v26';
+    const STORAGE_KEY = 'trinh_hg_settings_v27_fix_logic';
+    const INPUT_STATE_KEY = 'trinh_hg_input_state_v27';
   
     // MARKERS
     const MARK_REP_START  = '\uE000'; 
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const MARK_BOTH_START = '\uE004'; 
     const MARK_BOTH_END   = '\uE005';
   
+    // Cấu hình mặc định
     const defaultState = {
       currentMode: 'default',
       activeTab: 'settings',
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.body.classList.remove('loading');
 
-    // Ensure safe state
+    // Ensure safe state structure
     if (state.dialogueMode === undefined) state.dialogueMode = 0;
     if (state.abnormalCapsMode === undefined) state.abnormalCapsMode = 0;
     if (!state.regexMode) state.regexMode = 'chapter';
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.modes = JSON.parse(JSON.stringify(defaultState.modes));
         state.currentMode = 'default';
     }
+    // Fallback nếu mode hiện tại bị xóa hoặc lỗi
     if (!state.modes[state.currentMode]) state.currentMode = Object.keys(state.modes)[0] || 'default';
   
     let currentSplitMode = 2;
@@ -65,27 +67,34 @@ document.addEventListener('DOMContentLoaded', () => {
       settingPanels: document.querySelectorAll('.setting-panel'),
       modeSelect: document.getElementById('mode-select'),
       list: document.getElementById('punctuation-list'),
+      
+      // Buttons Toolbar
       matchCaseBtn: document.getElementById('match-case'),
       wholeWordBtn: document.getElementById('whole-word'),
       autoCapsBtn: document.getElementById('auto-caps'), 
+      
       renameBtn: document.getElementById('rename-mode'),
       deleteBtn: document.getElementById('delete-mode'),
       emptyState: document.getElementById('empty-state'),
+      
       formatCards: document.querySelectorAll('.format-card:not(.ab-caps-card)'),
       abCapsCards: document.querySelectorAll('.ab-caps-card'),
       regexRadios: document.getElementsByName('regex-preset'),
       customRegexInput: document.getElementById('custom-regex-input'),
       saveRegexBtn: document.getElementById('save-regex-settings'),
+      
       inputText: document.getElementById('input-text'),
       outputText: document.getElementById('output-text'),
       replaceBtn: document.getElementById('replace-button'),
       copyBtn: document.getElementById('copy-button'),
+      
       splitInput: document.getElementById('split-input-text'),
       splitWrapper: document.getElementById('split-outputs-wrapper'),
       splitTypeRadios: document.getElementsByName('split-type'),
       splitControlCount: document.getElementById('split-type-count'),
       splitControlRegex: document.getElementById('split-type-regex'),
       splitActionBtn: document.getElementById('split-action-btn'),
+      
       inputCount: document.getElementById('input-word-count'),
       outputCount: document.getElementById('output-word-count'),
       replaceCountBadge: document.getElementById('count-replace'),
@@ -196,27 +205,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // STEP 3: AUTO CAPS (Yêu cầu 3: Fix lỗi : " không cần space)
+            // STEP 3: AUTO CAPS (FIXED REGEX LOGIC)
             if (mode.autoCaps) {
-                // Regex Breakdown:
-                // 1. Start of line (^)
-                // 2. [.?!] + space
-                // 3. : + (optional space) + " (QUOTE ONLY, NO SPACE REQUIRED AFTER)
-                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“])(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
+                // Regex Giải thích:
+                // 1. ^ : Đầu dòng
+                // 2. [.?!]\s+ : Dấu câu kết thúc câu + khoảng trắng
+                // 3. :\s*["“]\s* : Dấu hai chấm + (space tùy chọn) + Dấu ngoặc kép + (space tùy chọn)
+                //    -> Cái này bắt được cả trường hợp `: "tôi` (không space) và `: " tôi` (có space)
+                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“]\s*)(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
 
                 processedText = processedText.replace(autoCapsRegex, (match, prefix, mStart, mContent, mEnd, rawWord) => {
                     let targetWord = mContent || rawWord;
                     if (!targetWord) return match;
                     
+                    // Viết hoa chữ cái đầu
                     let cappedWord = targetWord.charAt(0).toUpperCase() + targetWord.slice(1);
                     
                     if (mStart) {
                         countCaps++;
                         return `${prefix}${MARK_BOTH_START}${cappedWord}${MARK_BOTH_END}`;
                     } else {
-                        if (rawWord.charAt(0) === rawWord.charAt(0).toUpperCase()) return match; 
-                        countCaps++;
-                        return `${prefix}${MARK_CAP_START}${cappedWord}${MARK_CAP_END}`;
+                        // Nếu từ gốc chưa viết hoa thì mới tính là Auto Caps
+                        if (rawWord.charAt(0) !== rawWord.charAt(0).toUpperCase()) {
+                            countCaps++;
+                            return `${prefix}${MARK_CAP_START}${cappedWord}${MARK_CAP_END}`;
+                        }
+                        return match;
                     }
                 });
             }
@@ -270,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
              div.innerHTML = `
                 <div class="split-header"><span>Phần ${i} (Chờ kết quả...)</span><span class="badge">0 W</span></div>
                 <textarea id="out-split-${i-1}" class="custom-scrollbar" readonly placeholder="Kết quả phần ${i} sẽ hiện ở đây..."></textarea>
-                <div class="split-footer"><button class="btn btn-success full-width copy-split-btn" data-target="out-split-${i-1}" data-seq="${i}">Sao chép ${i}</button></div>
+                <div class="split-footer"><button type="button" class="btn btn-success full-width copy-split-btn" data-target="out-split-${i-1}" data-seq="${i}">Sao chép ${i}</button></div>
             `;
             els.splitWrapper.appendChild(div);
         }
@@ -329,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.innerHTML = `
                     <div class="split-header"><span>${pContent ? h : `Phần ${i+1} (Trống)`}</span><span class="badge">${countWords(pContent)} W</span></div>
                     <textarea id="out-split-${i}" class="custom-scrollbar" readonly>${pContent}</textarea>
-                    <div class="split-footer"><button class="btn btn-success full-width copy-split-btn" data-target="out-split-${i}" data-seq="${i+1}">Sao chép ${i+1}</button></div>`;
+                    <div class="split-footer"><button type="button" class="btn btn-success full-width copy-split-btn" data-target="out-split-${i}" data-seq="${i+1}">Sao chép ${i+1}</button></div>`;
                 els.splitWrapper.appendChild(div);
             }
             bindCopyEvents();
@@ -345,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `
                 <div class="split-header"><span>${part.title.substring(0,27)}...</span><span class="badge">${countWords(part.content)} W</span></div>
                 <textarea id="out-split-${index}" class="custom-scrollbar" readonly>${part.content}</textarea>
-                <div class="split-footer"><button class="btn btn-success full-width copy-split-btn" data-target="out-split-${index}" data-seq="${index+1}">Sao chép ${index+1}</button></div>`;
+                <div class="split-footer"><button type="button" class="btn btn-success full-width copy-split-btn" data-target="out-split-${index}" data-seq="${index+1}">Sao chép ${index+1}</button></div>`;
             els.splitWrapper.appendChild(div);
         });
         bindCopyEvents();
@@ -354,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function bindCopyEvents() {
         els.splitWrapper.querySelectorAll('.copy-split-btn').forEach(b => {
             b.onclick = (e) => {
+                e.preventDefault(); // FIX DOUBLE CLICK FEELING
                 const el = document.getElementById(e.target.dataset.target);
                 if(el && el.value) { 
                     navigator.clipboard.writeText(el.value); 
@@ -375,13 +390,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if(!state.modes[state.currentMode]) state.currentMode = 'default';
       els.modeSelect.value = state.currentMode;
+      // Cập nhật lại nút theo mode vừa render
       updateModeUI();
     }
   
+    // YÊU CẦU 1: HÀM CẬP NHẬT TRẠNG THÁI NÚT THEO MODE
     function updateModeUI() {
       const mode = state.modes[state.currentMode];
       if(mode) {
-          const upd = (btn, act, txt) => { btn.textContent = `${txt}: ${act ? 'BẬT' : 'Tắt'}`; btn.classList.toggle('active', act); };
+          const upd = (btn, act, txt) => { 
+              btn.textContent = `${txt}: ${act ? 'BẬT' : 'Tắt'}`; 
+              // Dùng toggle class thay vì set đè để tránh nháy
+              if(act) btn.classList.add('active'); else btn.classList.remove('active');
+          };
           upd(els.matchCaseBtn, mode.matchCase, 'Match Case');
           upd(els.wholeWordBtn, mode.wholeWord, 'Whole Word');
           upd(els.autoCapsBtn, mode.autoCaps, 'Auto Caps');
@@ -406,13 +427,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="index-label">${displayIndex}</div>
                 <input type="text" class="find" placeholder="Tìm" value="${p.find.replace(/"/g, '&quot;')}">
                 <input type="text" class="replace" placeholder="Thay thế" value="${(p.replace||'').replace(/"/g, '&quot;')}">
-                <button class="remove" data-idx="${realIndex}" tabindex="-1">×</button>
+                <button type="button" class="remove" data-idx="${realIndex}" tabindex="-1">×</button>
             `;
             item.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
                 p.find = item.querySelector('.find').value;
                 p.replace = item.querySelector('.replace').value;
             }));
-            item.querySelector('.remove').onclick = () => { mode.pairs.splice(realIndex, 1); saveState(); renderList(); };
+            item.querySelector('.remove').onclick = (e) => { 
+                e.preventDefault();
+                mode.pairs.splice(realIndex, 1); saveState(); renderList(); 
+            };
             els.list.insertBefore(item, els.list.firstChild);
         });
         checkEmptyState();
@@ -506,37 +530,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initEvents() {
-      els.tabButtons.forEach(btn => btn.onclick = () => switchTab(btn.dataset.tab));
-      els.sidebarBtns.forEach(btn => btn.onclick = () => switchSidebar(btn.dataset.target));
+      // Dùng preventDefault ở các nút chuyển tab để tránh hành vi click thừa
+      els.tabButtons.forEach(btn => btn.onclick = (e) => { e.preventDefault(); switchTab(btn.dataset.tab); });
+      els.sidebarBtns.forEach(btn => btn.onclick = (e) => { e.preventDefault(); switchSidebar(btn.dataset.target); });
 
-      const toggleHandler = (prop) => { const m = state.modes[state.currentMode]; m[prop] = !m[prop]; saveState(); updateModeUI(); };
-      els.matchCaseBtn.onclick = () => toggleHandler('matchCase');
-      els.wholeWordBtn.onclick = () => toggleHandler('wholeWord');
-      els.autoCapsBtn.onclick = () => toggleHandler('autoCaps');
+      const toggleHandler = (prop) => { 
+          const m = state.modes[state.currentMode]; 
+          m[prop] = !m[prop]; 
+          saveState(); 
+          // Cập nhật UI ngay lập tức
+          updateModeUI(); 
+      };
+      els.matchCaseBtn.onclick = (e) => { e.preventDefault(); toggleHandler('matchCase'); };
+      els.wholeWordBtn.onclick = (e) => { e.preventDefault(); toggleHandler('wholeWord'); };
+      els.autoCapsBtn.onclick = (e) => { e.preventDefault(); toggleHandler('autoCaps'); };
       
-      // Yêu cầu 1: Thêm updateModeUI() để khi chuyển mode thì nút cập nhật ngay
-      els.modeSelect.onchange = (e) => { state.currentMode = e.target.value; saveState(); renderList(); updateModeUI(); };
+      // Khi đổi Mode select -> Load lại cả List và Trạng thái nút
+      els.modeSelect.onchange = (e) => { 
+          state.currentMode = e.target.value; 
+          saveState(); 
+          renderList(); 
+          updateModeUI(); 
+      };
       
-      // Yêu cầu 2: Mode mới sạch trơn
-      document.getElementById('add-mode').onclick = () => { 
+      // YÊU CẦU 2: Nút + Mới tạo mode TRẮNG TRƠN
+      document.getElementById('add-mode').onclick = (e) => { 
+          e.preventDefault();
           const n = prompt('Tên Mode mới:'); 
           if(n && !state.modes[n]) { 
-              // Initialize empty mode
+              // Initialize empty mode (reset hết boolean về false)
               state.modes[n] = { pairs: [], matchCase: false, wholeWord: false, autoCaps: false }; 
               state.currentMode = n; 
               saveState(); renderModeSelect(); renderList(); 
           }
       };
       
-      document.getElementById('copy-mode').onclick = () => {
+      document.getElementById('copy-mode').onclick = (e) => {
+        e.preventDefault();
         const n = prompt('Tên Mode bản sao:'); 
         if(n && !state.modes[n]) { state.modes[n] = JSON.parse(JSON.stringify(state.modes[state.currentMode])); state.currentMode = n; saveState(); renderModeSelect(); renderList(); }
       };
-      els.renameBtn.onclick = () => { 
+      els.renameBtn.onclick = (e) => { 
+          e.preventDefault();
           const n = prompt('Tên mới:', state.currentMode); 
           if(n && n !== state.currentMode && !state.modes[n]) { state.modes[n] = state.modes[state.currentMode]; delete state.modes[state.currentMode]; state.currentMode = n; saveState(); renderModeSelect(); renderList(); }
       };
-      els.deleteBtn.onclick = () => { 
+      els.deleteBtn.onclick = (e) => { 
+          e.preventDefault();
           if(confirm('Xóa chế độ này?')) { 
               delete state.modes[state.currentMode]; 
               const keys = Object.keys(state.modes);
@@ -545,13 +585,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
       };
 
-      document.getElementById('add-pair').onclick = addNewPair;
-      document.getElementById('save-settings').onclick = () => { saveState(); showNotification('Đã lưu tất cả!'); };
-      document.getElementById('export-settings').onclick = exportCSV;
-      document.getElementById('import-settings').onclick = () => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv'; inp.onchange = e => { if(e.target.files.length) importCSV(e.target.files[0]) }; inp.click(); };
+      document.getElementById('add-pair').onclick = (e) => { e.preventDefault(); addNewPair(); };
+      document.getElementById('save-settings').onclick = (e) => { e.preventDefault(); saveState(); showNotification('Đã lưu tất cả!'); };
+      document.getElementById('export-settings').onclick = (e) => { e.preventDefault(); exportCSV(); };
+      document.getElementById('import-settings').onclick = (e) => { e.preventDefault(); const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv'; inp.onchange = e => { if(e.target.files.length) importCSV(e.target.files[0]) }; inp.click(); };
       
-      els.replaceBtn.onclick = performReplaceAll;
-      els.copyBtn.onclick = () => { 
+      els.replaceBtn.onclick = (e) => { e.preventDefault(); performReplaceAll(); };
+      els.copyBtn.onclick = (e) => { 
+          e.preventDefault();
           if(els.outputText.innerText) { 
               navigator.clipboard.writeText(els.outputText.innerText).then(() => { showInlineNotify(els.copyBtn, 'Đã sao chép!'); }); 
           } else showInlineNotify(els.copyBtn, 'Trống!');
@@ -571,7 +612,8 @@ document.addEventListener('DOMContentLoaded', () => {
           };
       });
 
-      els.saveRegexBtn.onclick = () => {
+      els.saveRegexBtn.onclick = (e) => {
+          e.preventDefault();
           state.regexMode = document.querySelector('input[name="regex-preset"]:checked').value;
           state.customRegex = els.customRegexInput.value;
           saveState();
@@ -579,12 +621,13 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       els.splitTypeRadios.forEach(radio => radio.addEventListener('change', updateSplitUI));
-      document.querySelectorAll('.split-mode-btn').forEach(btn => btn.onclick = () => { 
+      document.querySelectorAll('.split-mode-btn').forEach(btn => btn.onclick = (e) => { 
+          e.preventDefault();
           document.querySelectorAll('.split-mode-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); 
           currentSplitMode = parseInt(btn.dataset.split); 
           if(document.querySelector('input[name="split-type"][value="count"]').checked) renderSplitPlaceholders(currentSplitMode);
       });
-      els.splitActionBtn.onclick = performSplit;
+      els.splitActionBtn.onclick = (e) => { e.preventDefault(); performSplit(); };
       
       [els.inputText, els.splitInput].forEach(el => el.addEventListener('input', () => { updateCounters(); debounceSave(); }));
     }
