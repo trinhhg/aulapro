@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. CONFIGURATION & STATE
     // =========================================================================
     
-    const STORAGE_KEY = 'trinh_hg_settings_v25_tech_upd';
-    const INPUT_STATE_KEY = 'trinh_hg_input_state_v25';
+    const STORAGE_KEY = 'trinh_hg_settings_v26_fixed';
+    const INPUT_STATE_KEY = 'trinh_hg_input_state_v26';
   
     // MARKERS
     const MARK_REP_START  = '\uE000'; 
@@ -196,13 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // STEP 3: AUTO CAPS (FIXED FOR REQUIREMENT 1)
+            // STEP 3: AUTO CAPS (Yêu cầu 3: Fix lỗi : " không cần space)
             if (mode.autoCaps) {
                 // Regex Breakdown:
                 // 1. Start of line (^)
                 // 2. [.?!] + space
-                // 3. : + (optional space) + " + (optional space)
-                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“]\s*)(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
+                // 3. : + (optional space) + " (QUOTE ONLY, NO SPACE REQUIRED AFTER)
+                const autoCapsRegex = /(^|[.?!]\s+|:\s*["“])(?:(\uE000)(.*?)(\uE001)|([^\s\uE000\uE001]+))/gmu;
 
                 processedText = processedText.replace(autoCapsRegex, (match, prefix, mStart, mContent, mEnd, rawWord) => {
                     let targetWord = mContent || rawWord;
@@ -408,11 +408,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" class="replace" placeholder="Thay thế" value="${(p.replace||'').replace(/"/g, '&quot;')}">
                 <button class="remove" data-idx="${realIndex}" tabindex="-1">×</button>
             `;
-            // Yêu cầu 3: LOẠI BỎ debounceSave() ở sự kiện input. Chỉ cập nhật object trong memory.
             item.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => {
                 p.find = item.querySelector('.find').value;
                 p.replace = item.querySelector('.replace').value;
-                // KHÔNG GỌI saveState() Ở ĐÂY!
             }));
             item.querySelector('.remove').onclick = () => { mode.pairs.splice(realIndex, 1); saveState(); renderList(); };
             els.list.insertBefore(item, els.list.firstChild);
@@ -479,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'settings_v25_tech.csv'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'settings_v26_final.csv'; a.click();
     }
 
     function updateCounters() {
@@ -487,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.outputCount.textContent = 'Words: ' + countWords(els.outputText.innerText);
       els.splitInputCount.textContent = 'Words: ' + countWords(els.splitInput.value);
     }
-    function debounceSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { saveTempInput(); /* Lưu ý: Không lưu state cài đặt ở đây nữa cho danh sách */ if(state.activeTab !== 'settings') saveState(); }, 500); }
+    function debounceSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { saveTempInput(); if(state.activeTab !== 'settings') saveState(); }, 500); }
     function saveTempInput() { localStorage.setItem(INPUT_STATE_KEY, JSON.stringify({ inputText: els.inputText.value, splitInput: els.splitInput.value })); }
     function loadTempInput() {
       const saved = JSON.parse(localStorage.getItem(INPUT_STATE_KEY));
@@ -511,18 +509,25 @@ document.addEventListener('DOMContentLoaded', () => {
       els.tabButtons.forEach(btn => btn.onclick = () => switchTab(btn.dataset.tab));
       els.sidebarBtns.forEach(btn => btn.onclick = () => switchSidebar(btn.dataset.target));
 
-      // Yêu cầu 4: Trạng thái nút theo chế độ
       const toggleHandler = (prop) => { const m = state.modes[state.currentMode]; m[prop] = !m[prop]; saveState(); updateModeUI(); };
       els.matchCaseBtn.onclick = () => toggleHandler('matchCase');
       els.wholeWordBtn.onclick = () => toggleHandler('wholeWord');
       els.autoCapsBtn.onclick = () => toggleHandler('autoCaps');
       
-      els.modeSelect.onchange = (e) => { state.currentMode = e.target.value; saveState(); renderList(); };
+      // Yêu cầu 1: Thêm updateModeUI() để khi chuyển mode thì nút cập nhật ngay
+      els.modeSelect.onchange = (e) => { state.currentMode = e.target.value; saveState(); renderList(); updateModeUI(); };
       
+      // Yêu cầu 2: Mode mới sạch trơn
       document.getElementById('add-mode').onclick = () => { 
           const n = prompt('Tên Mode mới:'); 
-          if(n && !state.modes[n]) { state.modes[n] = JSON.parse(JSON.stringify(defaultState.modes.default)); state.currentMode = n; saveState(); renderModeSelect(); renderList(); }
+          if(n && !state.modes[n]) { 
+              // Initialize empty mode
+              state.modes[n] = { pairs: [], matchCase: false, wholeWord: false, autoCaps: false }; 
+              state.currentMode = n; 
+              saveState(); renderModeSelect(); renderList(); 
+          }
       };
+      
       document.getElementById('copy-mode').onclick = () => {
         const n = prompt('Tên Mode bản sao:'); 
         if(n && !state.modes[n]) { state.modes[n] = JSON.parse(JSON.stringify(state.modes[state.currentMode])); state.currentMode = n; saveState(); renderModeSelect(); renderList(); }
@@ -541,7 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       document.getElementById('add-pair').onclick = addNewPair;
-      // Yêu cầu 3: Chỉ lưu khi bấm nút này
       document.getElementById('save-settings').onclick = () => { saveState(); showNotification('Đã lưu tất cả!'); };
       document.getElementById('export-settings').onclick = exportCSV;
       document.getElementById('import-settings').onclick = () => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv'; inp.onchange = e => { if(e.target.files.length) importCSV(e.target.files[0]) }; inp.click(); };
